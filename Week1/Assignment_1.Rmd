@@ -1,0 +1,82 @@
+---
+title: "Assignment 1"
+author: "Andrianina David Raharijao"
+date: "2024-02-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Introduction
+
+For this assignment, I have decided to use the "What Do Men Think It Means To Be A Man?" data set. I will be looking at the raw responses.
+
+Each row represents one respondent and each column is the question that they answered, and the row content contains their answers to the question.
+
+The [article](https://fivethirtyeight.com/features/what-do-men-think-it-means-to-be-a-man/) related to the data set was written by Ella Koeze and Anna Maria Barry Jester. It reports on a survey of 1,615 American men, and talks about how their perception on masculinity changed after the #MeToo movement. 
+
+**My subset of the data frame**
+
+I found it interesting that some respondent of the respondent deemed themselves as "Very masculine", and so I would like to know more about the subgroup of people that answered the first question this way.
+
+I will be keeping the following column:
+
+* q0001: How masculine do you feel ?
+* q0002: How important is other's perception of your masculinity?
+* q0026: Sexual orientation
+* q0029: last grade of school completed
+* age3:  age range
+
+```{r Q1_a}
+#Load the csv file
+response <- read_csv("raw-responses.csv")
+
+```
+```{r Q1_b}
+#Looking at the initial table
+response
+
+```
+```{r remove other columns}
+#Only keeping the questions that I want to observe
+cl <- response[, c("q0001","q0002","q0026","q0029","age3")]
+
+```
+```{r add column}
+#Adding an index to distinguish each respondents
+cl$respondent_id <- seq.int(nrow(cl))
+```
+```{r rename columns}
+#Rename columns
+cl <- rename(cl,
+   masculinity_lvl = q0001 ,
+   masculinity_importance = q0002,
+   sex_orientation = q0026,
+   highest_ed = q0029,
+   age_group = age3
+  )
+```
+```{r modify columns}
+#Modify column content
+cl$masculinity_lvl <- gsub("masculine", "", cl$masculinity_lvl, ignore.case = TRUE)
+cl$masculinity_importance <- gsub("important", "", cl$masculinity_importance, ignore.case = TRUE)
+```
+```{r filter}
+#Only filter out my desired rows
+cl_v <- cl %>%
+  mutate(across(where(is.character), trimws))
+
+cl_v <- cl_v %>%
+  filter(masculinity_lvl == "Very")
+```
+```{r table}
+cl_v
+```
+
+## Conclusion
+
+From this selected article, I intend to explore the data to see if there is a strong correlation with the respondent putting "Very masculine" and one of the other variables that I have kept in the table. This is to see if a specific background can be attributed to a person's image of their masculinity.
+
