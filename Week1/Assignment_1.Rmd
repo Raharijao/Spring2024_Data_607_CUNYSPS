@@ -32,8 +32,12 @@ I will be keeping the following column:
 
 ```{r Q1_a}
 #Load the csv file
-response <- read_csv("raw-responses.csv")
+#Old way
+#response <- read_csv("raw-responses.csv")
 
+#New way
+url <- https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Week1/raw-responses.csv
+response <- read_csv(url)
 ```
 ```{r Q1_b}
 #Looking at the initial table
