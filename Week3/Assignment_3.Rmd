@@ -1,0 +1,72 @@
+---
+title: "Assignment 3"
+author: "Andrianina David Raharijao"
+date: "2024-02-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tinytex)
+library(tidyverse)
+#Setting up data set
+majors <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv")
+```
+
+## Question 1
+
+```{r q1}
+q1_ans <- majors %>%
+  filter(grepl("DATA", Major) | grepl("STATISTICS", Major))
+q1_ans
+```
+
+## Question 2
+
+```{r q2}
+#Loads fruit list
+fruit_list <- list("bell pepper",  "bilberry",     "blackberry",   "blood orange",
+ "blueberry",    "cantaloupe",   "chili pepper", "cloudberry",  
+ "elderberry",   "lime",         "lychee",       "mulberry",    
+ "olive",        "salal berry")
+
+# Turns the list info a vector
+q2_ans <- unlist(fruit_list)
+q2_ans
+```
+## Question 3
+
+* (.)\1\1 = matches any sequence of a single character repeating three times. (ex: "aaa")
+* "(.)(.)\\2\\1" = matches any sequences of characters that look like this (abba, cddc, effe) and is in between ""
+* (..)\1 = matches any sequences of characters that look like this (abab, cdcd, efef)
+* "(.).\\1.\\1" = matches any sequences of characters that look like this (adaxa, ckchc, nlnjn, lmlnl) and is between ""
+* "(.)(.)(.).*\\3\\2\\1" = matches any sequences of characters where it begins with a set of three characters, followed by some character (or none)and then ending with the first set of three characters, but in reverse order. All of this between ""
+
+```{r q3}
+#For testing
+text <- 'abccbalkjsdoihfoie'
+pattern1 <- '(.)(.)(.).*\\3\\2\\1'
+
+q3_ans <- regmatches(text, gregexpr(pattern1, text))
+q3_ans
+```
+
+## Question 4
+```{r q4}
+#For testing
+text <- 'lkjhklk lilieii hkihiii iii'
+
+regex_1 <- "\\b(\\w)\\w*\\1\\b"
+#//b denotes the limits of the word
+#(\\w) denotes the first character of the word
+#\\w* represents all following character
+#\\1 means that the last character should be the same as the first character
+regex_2 <- "\\b\\w*(\\w\\w)\\w*\\1\\w*\\b"
+#//b denotes the limits of the word
+#\\w* denotes any character (or none) before the two sets of character
+#(\\w\\w) represents the two characters
+regex_3 <- "\\b(\\w).*\\1.*\\1.*\\b"
+
+q4_ans <- regmatches(text, gregexpr(regex_3, text))
+q4_ans
+```
