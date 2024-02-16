@@ -25,21 +25,28 @@ q1_ans
 
 ```{r q2}
 #Loads fruit list
-fruit_list <- list("bell pepper",  "bilberry",     "blackberry",   "blood orange",
- "blueberry",    "cantaloupe",   "chili pepper", "cloudberry",  
- "elderberry",   "lime",         "lychee",       "mulberry",    
- "olive",        "salal berry")
+fruit_list <- '[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+[13] "olive"        "salal berry"'
 
+patternf <- "\"(.*?)\""
+
+q2_ans <- str_extract_all(fruit_list, patternf)
 # Turns the list info a vector
-q2_ans <- unlist(fruit_list)
-q2_ans
+q2_ans <- unlist(q2_ans)
+q2_ans <- gsub('\\"', "", q2_ans)
+print(q2_ans)
 ```
 ## Question 3
 
 * (.)\1\1 = matches any sequence of a single character repeating three times. (ex: "aaa")
-* "(.)(.)\\2\\1" = matches any sequences of characters that look like this (abba, cddc, effe) and is in between ""
-* (..)\1 = matches any sequences of characters that look like this (abab, cdcd, efef)
-* "(.).\\1.\\1" = matches any sequences of characters that look like this (adaxa, ckchc, nlnjn, lmlnl) and is between ""
+
+* "(.)(.)\\2\\1" = matches any sequences of characters that starts out with two characters, and is then followed by a repetition of those two characters, but in reverse order, which looks like this (abba, cddc, effe). and the two characters have to be in between ""
+
+* (..)\1 = matches any sequences of two characters, where the sequence repeats, which looks like this (abab, cdcd, efef)
+* "(.).\\1.\\1" = matches any sequences of characters where the starting character repeats three times, and those occurrences are separated by any character. All of this has to be between "". Something which looks like this (adaxa, ckchc, nlnjn, lmlnl)
+
 * "(.)(.)(.).*\\3\\2\\1" = matches any sequences of characters where it begins with a set of three characters, followed by some character (or none)and then ending with the first set of three characters, but in reverse order. All of this between ""
 
 ```{r q3}
@@ -54,7 +61,7 @@ q3_ans
 ## Question 4
 ```{r q4}
 #For testing
-text <- 'lkjhklk lilieii hkihiii iii'
+text <- 'bobo bo kokoko'
 
 regex_1 <- "\\b(\\w)\\w*\\1\\b"
 #//b denotes the limits of the word
@@ -65,7 +72,7 @@ regex_2 <- "\\b\\w*(\\w\\w)\\w*\\1\\w*\\b"
 #//b denotes the limits of the word
 #\\w* denotes any character (or none) before the two sets of character
 #(\\w\\w) represents the two characters
-regex_3 <- "\\b(\\w).*\\1.*\\1.*\\b"
+regex_3 <- "\\b\\w*(\\w)\\w*\\1\\w*\\1\\w*\\b"
 
 q4_ans <- regmatches(text, gregexpr(regex_3, text))
 q4_ans
