@@ -27,7 +27,7 @@ First I want to determine the columns that I will need in the final csv file:
 
 # Loading the data
 ```{r load_data}
-data <- readLines("Chess_data.txt")
+data <- readLines("https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Week4/Chess_data.txt")
 
 ```
 
@@ -130,7 +130,7 @@ print(popt)
 
 ```
 
-#Building final data frame
+#Building final data frame and load into csv
 ```{r dataframe2}
 
 df$popt <- as.integer(popt)
@@ -143,6 +143,11 @@ df <- rename(df,
    Player_pre_rating = pcr,
    Player_op_avg_prerat = popt
   )
+```
+
+```{r csv}
+
+write.csv(df, "Chess_data.csv", row.names = TRUE)
 
 ```
 
