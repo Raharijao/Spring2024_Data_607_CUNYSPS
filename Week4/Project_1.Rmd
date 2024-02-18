@@ -1,0 +1,177 @@
+---
+title: "Project_1"
+author: "Andrianina David Raharijao"
+date: "2024-02-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(readr)
+library(stringr)
+library(tidyr)
+```
+
+## Planning
+
+First I want to determine the columns that I will need in the final csv file:
+
+* Player name
+* Player state
+* Total number of points
+* Player Pre-rating
+*Average Pre Chess
+  *Opponents pre tournament ratings (sum)
+  *Total number of opponents
+
+# Loading the data
+```{r load_data}
+data <- readLines("Chess_data.txt")
+
+```
+
+#Extracting the player number
+```{r Player_numb}
+pnu_pattern <- "\\d+ \\| "
+pnu <- str_extract_all(data, pnu_pattern)
+pnu <- unlist(pnu)
+pnu <- gsub(' \\| ', "", pnu)
+print(pnu)
+```
+
+#Extracting the player's name
+```{r Player_name}
+pn_pattern <- "\\| [A-Z]([^|]+) \\|"
+pn <- str_extract_all(data, pn_pattern)
+pn <- unlist(pn)
+#remove extra characters
+pn <- gsub('\\|', "", pn)
+#remove header rows
+pn <- pn[-c(1,2)]
+#remove extra spaces
+pn <- trimws(pn)
+print(pn)
+```
+
+#Extracting the player's state
+```{r Player_state}
+ps_pattern <- "[A-Z][A-Z] \\|"
+ps <- str_extract_all(data, ps_pattern)
+ps <- unlist(ps)
+ps <- gsub(' \\|', "", ps)
+print(ps)
+```
+
+#Extracting the player's total point
+```{r Player_total_point}
+pts_pattern <- "\\d\\.\\d+  \\|"
+ptS <- str_extract_all(data, pts_pattern)
+ptS <- unlist(ptS)
+ptS <- gsub('  \\|', "", ptS)
+print(ptS)
+```
+
+#Extracting the player's pre chess rating
+```{r Player_pre_chess_rating}
+pcrt_pattern <- "R: ([^-]+)-"
+pcr_pattern <- "R:\\s*(\\d{1,4})"
+pcr <- str_extract_all(data, pcr_pattern)
+pcr <- unlist(pcr)
+pcr <- gsub('R: ', "", pcr)
+#pcr <- gsub('-', "", pcr)
+pcr <- trimws(pcr)
+print(pcr)
+```
+
+#Building the data frame (to be used in next step)
+```{r dataframe1}
+
+df <- data.frame(pn,ps,ptS,pcr)
+df$pcr <- as.integer(df$pcr)
+
+```
+
+#Extracting a list of all the oppopnents for each row
+```{r Player_opponents}
+pop_pattern <- "[A-Z] \\s*\\d+"
+pop <- str_extract_all(data, pop_pattern)
+#Filters out blank lists with no opponent info
+pop <- pop[lengths(pop) > 0]
+#Clean out non player ID characters
+pop <- lapply(pop, function(x) gsub("[A-Z]  ", "", x))
+# #Make it into a list of number lists
+pop <- lapply(pop, unlist)
+pop <- lapply(pop, function(sublist) {
+   as.numeric(sublist)
+ })
+print(pop)
+```
+
+#Extracting all of the opponent's average score from the data frame and then averaging it
+```{r average_opponents_score}
+
+#For each sublist in the main list
+popt <- lapply(pop, function(numb_list) {
+  #For each items in the sublist
+  t_scores <- lapply(numb_list, function(number) {
+    if (number %in% rownames(df)) {
+      return(df[number, "pcr"])
+    } else {
+      return(NA)
+    }
+  })
+  av <- round(mean(unlist(t_scores)))
+  return(av)
+})
+popt <- unlist(popt)
+print(popt)
+
+
+```
+
+#Building final data frame
+```{r dataframe2}
+
+df$popt <- as.integer(popt)
+
+#Rename columns
+df <- rename(df,
+   Player_name = pn ,
+   Player_state = ps,
+   Player_total_points = ptS,
+   Player_pre_rating = pcr,
+   Player_op_avg_prerat = popt
+  )
+
+```
+
+
+These are just chunks of codes I used to experiment
+```{r test}
+data_test <- c("aaa bfg gl","klmno jjj", "kop lll ooo")
+data_test2 <- c("aaa", "abc", "bbbbb", "cccd", "eeef", "ggghhh")
+pattern <- "(.)\\1\\1"
+matching_elements <- str_extract_all(data_test, pattern)
+matching_elements <- unlist(matching_elements)
+print(matching_elements)
+
+```
+
+```{r test2}
+test <- "|6.0  |W  39|W  21|W  18|W  14|W   7|D  12|D   4|"
+pop_pattern <- "[A-Z]\\s*\\d+"
+testr <- str_extract_all(test, pop_pattern)
+print(testr)
+
+
+```
+
+```{r test3}
+data_test <- c("R: 123lkj")
+pattern <- "R: (\\d{1,4})" 
+matching_elements <- str_extract_all(data_test, pattern)
+matching_elements <- unlist(matching_elements)
+print(matching_elements)
+
+```
