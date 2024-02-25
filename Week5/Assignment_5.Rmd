@@ -9,20 +9,85 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(tidyr)
+library(dplyr)
 ```
 
 ## Reading the data
-
 ```{r read}
-summary(cars)
+airdata <- read_csv("https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Week5/DATA607_assignment5_file.csv")
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+## Removes Space row
+```{r clean}
+airdata <- airdata %>%
+  filter(!is.na(...2))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Turning data into long format
+```{r long}
+long <- pivot_longer(airdata,
+                     cols = -c(...1, ...2),
+                     names_to = "city",
+                     values_to = "count")
+```
+
+## Fill the blanks for airline name
+```{r fill_blank}
+long <- long %>%
+  fill(...1, .direction = "down")
+```
+
+## Rename columns
+```{r rename}
+long <- rename(long,
+               airline = ...1,
+               status = ...2)
+```
+
+## Analysis
+
+#Which city does each airline have the highest on time ratio? what about lowest?
+
+In term of on time arrival ratio, Phoenix seems to be the destination where both airlines performs best.And San Francisco seems to be the city with the most delays for both of them. 
+```{r ratio}
+long_ratio <- long %>%
+   group_by(airline, city) %>%
+   summarise(
+     on_time = count[status == "on time"],
+     delayed = count[status == "delayed"],
+     ratio = on_time/delayed
+   ) %>%
+  arrange(desc(ratio))
+#long_ratio 
+
+#overall ratio
+long_ratio_overall <- long_ratio %>%
+  group_by(airline) %>%
+  summarise(
+    mean = mean(ratio)
+  )
+long_ratio
+```
+
+Overall, ALASKA airlines seems to have a better on time ratio than AM WEST.
+```{r ratio2}
+
+long_ratio_overall
+```
+
+# Which city do the airlines have the largest difference of on time ratio?
+
+It seems like the largest difference in on time ratio is Phoenix, there is a difference of 6 between the on time ratio of ALASK and AM WEST. 
+```{r dif_ratio}
+
+long_ratio_dif <- long_ratio %>%
+  group_by(city) %>%
+  summarise(
+    dif = abs(ratio[airline == "ALASKA"] - ratio[airline == "AM WEST"])
+  ) %>%
+  arrange(desc(dif))
+long_ratio_dif
+```
+
+
+
