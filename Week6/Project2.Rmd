@@ -1,0 +1,26 @@
+---
+title: "Project 2"
+author: "Andrianina David Raharijao"
+date: "2024-03-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+```
+
+## Data sets
+
+I will be looking at the following three data sets for this project:
+
+* MTA Ridership (shared by Anna Moy)
+* Ask a Manager Salary Survey (shared by Rashad Long)
+* Language diversity (shared by me)
+
+```{r MTA}
+summary(cars)
+```
+
