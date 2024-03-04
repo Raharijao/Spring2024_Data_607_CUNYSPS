@@ -17,10 +17,162 @@ library(dplyr)
 I will be looking at the following three data sets for this project:
 
 * MTA Ridership (shared by Anna Moy)
-* Ask a Manager Salary Survey (shared by Rashad Long)
+* population data for 4 states (shared by Natalie Kalukeerthie)
 * Language diversity (shared by me)
 
-```{r MTA}
-summary(cars)
+## MTA Ridership data:
+
+#Tidying
+I first load the data from Github
+```{r read_MTA}
+mta_df <- read_csv("https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Week6/MTA_Daily_Ridership_Data__Beginning_2020_20240303.csv")
 ```
 
+I delete some of the columns, as I will not need some of them for the analysis. I am left with the date and the total estimated ridership of the subway, buses, LIRR and Metro-North.
+```{r clean_MTA_1}
+#Get all the column names
+print(colnames(mta_df))
+
+mta_df_v1 <- mta_df[,c("Date",
+                       "Subways: Total Estimated Ridership",
+                       "Buses: Total Estimated Ridership",
+                       "LIRR: Total Estimated Ridership", 
+                       "Metro-North: Total Estimated Ridership"
+                       )]
+```
+
+```{r rename_MTA_1}
+old_names <- c("Subways: Total Estimated Ridership",
+               "Buses: Total Estimated Ridership",
+               "LIRR: Total Estimated Ridership", 
+               "Metro-North: Total Estimated Ridership")
+
+new_names <- c("Subway", "Bus", "LIRR", "Metro_North")
+names(mta_df_v1)[names(mta_df_v1) %in% old_names] <- new_names
+```
+
+I turn the data from a wide format to a long format. I turned all of the columns exept for the Date
+```{r long_MTA}
+mta_df_v1 <- pivot_longer(mta_df_v1,
+                     cols = -c(Date),
+                     names_to = "type",
+                     values_to = "ridership")
+```
+
+Check for NA and delete with data conversion (for date, and for ridership)
+```{r NA_MTA}
+print(sum(is.na(mta_df_v1$ridership)))
+mta_df_v1 <- mta_df_v1 %>%
+  filter(!is.na(ridership))
+
+mta_df_v1$Date <- as.Date(mta_df_v1$Date, format = "%m/%d/%Y")
+mta_df_v1$year <- year(mta_df_v1$Date)
+#Divide by 1000 to reduce the scale a bit
+mta_df_v1$ridership <- (mta_df_v1$ridership)/1000
+```
+
+#Analysis
+
+**Summary of 2020,2021,2022 average ridership for the transportation types**
+
+This graph displays the average ridership (by thousand people, this was done because the initial number's scale was too big) of the different type of transportation by year. Overall, the subway and the bus enjoys the most ridership, LIRR and Metro North are significantly lower. However, while the average for the subway and buses have decreased between 2023 and 2024 (this might be due to the year just starting) the average ridership of LIRR and Metro North seems to be increasing as the year passes. 
+```{r q1_MTA}
+mta_df_v2 <- mta_df_v1 %>%
+  group_by(year,type) %>%
+  summarize(mean_m = mean(ridership))
+  
+
+ggplot(data = mta_df_v2, aes(x = year, y = mean_m, group = type, color = type)) +
+  geom_line()
+
+```
+
+**Subway vs Buses in 2020**
+
+In 2020, the subway definitely got more ridership than the bus at all time. The subway got as much as 5000 thousands riders prior to April, and buses had as much as 2000 thousands. However, around the end of March, both experienced a huge drop in ridership. Buses dropped as low as a few hundred riders.The subway maintained some riders after the drop, but the buses did not recover until August/September.
+
+```{r q2_MTA}
+mta_df_v3 <- mta_df_v1 %>%
+  filter(type == "Subway" | type == "Bus", year == 2020)
+  
+
+ggplot(data = mta_df_v3, aes(x = Date, y = ridership, group = type, color = type)) +
+  geom_line()
+
+```
+
+**Highest ridership in 2020**
+```{r q3_MTA}
+mta_df_v4 <- mta_df_v1 %>%
+  filter(year == 2020)  %>%
+  group_by(type) %>%
+  summarize(total_ridership = sum(ridership)) %>%
+  arrange(desc(total_ridership))
+  
+mta_df_v4
+
+```
+
+
+##Language diversity
+
+#Tidying
+Read the file
+```{r read_lang}
+lang_df <- read_csv("https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Week6/language_diversity.csv")
+```
+
+Turn the data into wide format:
+```{r wide_lang}
+lang_df_1 <- lang_df %>%
+  pivot_wider(names_from = Measurement, values_from = Value)
+```
+
+#Analysis
+
+**Are some continent more diverse than others in term of languages?**
+```{r q1_lang}
+lang_df_2 <- lang_df_1 %>%
+  group_by(Continent) %>%
+  summarize(sum_l = sum(Langs))
+
+#ggplot(data = lang_df_2, aes(x = Continent, y = sum_l)) +
+  #geom_bar()
+```
+**Does a high population mean a higher amount of language diversity**
+**Does larger area mean higher language diversity?**
+
+
+##Population data for 4 states
+
+#Tidying
+```{r read_pop}
+pop_df <- read_csv("https://raw.githubusercontent.com/nk014914/Data-607/main/Population_data.csv")
+```
+
+
+Renamed Columns:
+```{r nameChange_pop}
+old_names <- c("2015 Population",
+               "2016 Population",
+               "2017 Population", 
+               "2018 Population",
+               "2019 Population",
+               "2020 Population")
+
+new_names <- c("2015", "2016", "2017", "2018","2019","2020")
+names(pop_df)[names(pop_df) %in% old_names] <- new_names
+```
+
+
+Filtered out blank rows, and turned the table into long format
+```{r long_pop}
+pop_df <- pop_df %>%
+  filter(!is.na(Name))
+
+pop_df_1 <- pivot_longer(pop_df,
+                     cols = -c(Name,FIPS,Abbreviations),
+                     names_to = "year",
+                     values_to = "count")
+
+```
