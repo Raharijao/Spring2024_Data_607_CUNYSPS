@@ -1,0 +1,33 @@
+[
+    {
+        "title": "The Cold War: A New History",
+        "authors": [
+            "John Lewis Gaddis"
+        ],
+        "interesting_attributes": [
+            "It covers concise history",
+            "It gives a good overview from WWII to the fall of the USSR"
+        ]
+    },
+    {
+        "title": "The Cold War: A World History",
+        "authors": [
+            "Odd Arne Westad",
+            "John Lewis Gaddis"
+        ],
+        "interesting_attributes": [
+            "It displays a global perspective",
+            "It also shows the ideological roots of the conflict"
+        ]
+    },
+    {
+        "title": "Strategies of Containment: A Critical Appraisal of American National Security Policy during the Cold War",
+        "authors": [
+            "John Lewis Gaddis"
+        ],
+        "interesting_attributes": [
+            "Focus on U.S. strategies of containment",
+            "Detailed analysis of U.S. foreign policy"
+        ]
+    }
+]
