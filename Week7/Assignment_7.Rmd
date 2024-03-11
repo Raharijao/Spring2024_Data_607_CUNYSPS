@@ -1,0 +1,67 @@
+---
+title: "Assignment 7"
+author: "Andrianina David Raharijao"
+date: "2024-03-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(jsonlite)
+library(rvest)
+library(XML)
+library(RCurl)
+library(plyr)
+```
+
+## Load the three files using Github links to the file
+```{r load_json}
+#Loading Json
+json_df <- fromJSON("https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Week7/books_coldWar.json")
+```
+
+```{r load_html}
+html_data <- read_html("https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Week7/books_coldWar.html")
+table_node <- html_data %>% html_node("table")
+html_df <- table_node %>% html_table(fill = TRUE)
+```
+
+```{r load_xlm}
+#Loading XML
+x <- getURL("https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Week7/books_coldWar.xml")
+xml_data <- xmlParse(x)
+```
+
+```{r load_xlm_2}
+
+# Extract book nodes
+books <- getNodeSet(xml_data, "//book")
+
+# Function to extract data from each book node
+extract_book_info <- function(book) {
+  # Extract title
+  title <- xmlValue(book[["title"]])
+  
+  # Extract authors
+  authors_nodes <- getNodeSet(book, "authors/author")
+  authors <- sapply(authors_nodes, xmlValue)
+  
+  # Extract interesting attributes
+  attributes_nodes <- getNodeSet(book, "interesting_attributes/attribute")
+  interesting_attributes <- sapply(attributes_nodes, xmlValue)
+  
+  # Return as a list
+  data.frame(
+    Title = title,
+    Authors = paste(authors, collapse = ", "),
+    Interesting_Attributes = paste(interesting_attributes, collapse = "; ")
+  )
+}
+
+# Apply the function to each book node and create a dataframe
+xml_df <- do.call(rbind, lapply(books, extract_book_info))
+
+
+
+```
+
