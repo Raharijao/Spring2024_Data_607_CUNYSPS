@@ -1,0 +1,36 @@
+---
+title: "HW9"
+author: "Andrianina David Raharijao"
+date: "2024-03-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(httr)
+library(jsonlite)
+```
+
+## Web API
+
+First I specify the API's end point:
+
+```{r q1}
+api_url <- "https://api.nytimes.com/svc/topstories/v2/us.json?api-key=XyD2Prjgvsw5Psu7IYBatJGEDtrJnIfw"
+```
+
+Make the call:
+```{r q2}
+response <- GET(api_url)
+```
+
+Format the JSON file and turn it into a Dataframe:
+```{r q3}
+parsed_content <- content(response, "text")
+df <- fromJSON(parsed_content)
+s_df <- df$results
+s_df
+```
+
+
+
