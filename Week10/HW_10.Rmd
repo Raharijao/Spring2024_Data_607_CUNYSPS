@@ -1,0 +1,67 @@
+---
+title: "HW_10"
+author: "Andrianina David Raharijao"
+date: "2024-03-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidytext)
+library(textdata)
+library(gutenbergr)
+library(dplyr)
+library(stringr)
+library(syuzhet)
+library(ggplot2) 
+library(tibble)
+```
+
+##Get lexicon
+
+```{r q1}
+df_afin <- get_sentiments("afinn")
+df_bing <- get_sentiments("bing")
+df_nrc <- get_sentiments("nrc")
+```
+
+##Get Data
+```{r q2}
+text_data <- gutenberg_download(1963) 
+```
+
+##Analysis
+```{r q3}
+tidy_data_bing <- text_data %>%
+  unnest_tokens(word, text) %>%
+  inner_join(df_bing)
+
+tidy_data_bing %>%
+  count(sentiment) %>%
+  ggplot(aes(x = sentiment, y = n, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Sentiment distribution using Bing lexicon")
+```
+
+```{r q4}
+
+text_vector <- paste(text_data$text, collapse = " ") 
+
+nrc_sentiment <- get_nrc_sentiment(text_vector)
+
+nrc_sentiment %>%
+  colSums() %>%
+  enframe(name = "sentiment", value = "count") %>%
+  ggplot(aes(x = sentiment, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Sentiment distribution using NRC lexicon")
+
+
+```
+
+
+
+
+
+
+
