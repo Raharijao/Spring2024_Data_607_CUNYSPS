@@ -1,0 +1,169 @@
+---
+title: "Project_607"
+author: "Andrianina David Raharijao"
+date: "2024-05-06"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(httr)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(ggmap)
+```
+
+##Data acquisition
+
+**CSV data of MTA Subway Stations and their location**
+```{r read_data}
+mta_stations <- read_csv("https://raw.githubusercontent.com/Raharijao/Spring2024_Data_607_CUNYSPS/main/Project_final/MTA_Subway_Stations_20240506.csv")
+```
+
+**API call of ridership data**
+```{r api_call_1}
+url <- "https://data.ny.gov/resource/wujg-7c2s.json"
+app_token <- "85966iMGG1JQ0cq5w2rJmYTxQ"
+```
+
+```{r api_call_2}
+response <- GET(url, add_headers(`X-App-Token` = app_token))
+```
+
+**Pull the API data, only bull subway info for Manhattan and the Bronx, and pick the hourly data for Monday April 22nd, at 8am**
+```{r api_call_3}
+# Setup query parameters for the API call
+query_params <- list(
+  `$where` = paste("transit_mode='subway' AND",
+                   "(borough='Manhattan' OR borough='Bronx') AND",
+                   "transit_timestamp >= '2024-04-25T08:00:00'"),
+  `$limit` = 2000,
+  `$$app_token` = "85966iMGG1JQ0cq5w2rJmYTxQ"
+)
+response2 <- GET(url, query = query_params)
+
+data <- content(response2, "parsed")
+data_frame <- bind_rows(data)
+```
+
+##Data Cleaning
+
+1- CSV data on Train stations
+
+**Renamed a column**
+```{r cleaning_1_a}
+mta_stations <- mta_stations %>%
+  rename(train_Line = `Daytime Routes`) %>%
+  rename(station_complex_id = `Complex ID`)%>%
+  mutate(
+    station_complex_id = as.character(station_complex_id))
+```
+
+**Only kept stations that have the D train, and only kept Manhattan and Bronx stops, and delete some columns**
+```{r cleaning_1_b}
+mta_stations_D <- mta_stations %>%
+  filter(grepl("D", train_Line)) %>%
+  filter(Borough %in% c("M", "Bx")) %>%
+  select(-Division, -Structure, -ADA, -`ADA Southbound`,-`ADA Northbound`,-`North Direction Label`,-`South Direction Label`, -`ADA Notes`)
+```
+
+2- Data from API call
+**Removing duplicates, converting the transit time stamp column to a time value, and the ridership data to int**
+```{r cleaning_2_a}
+data_frame_clean <- data_frame %>%
+  filter(georeference != "Point") %>%
+  select(transit_timestamp, station_complex_id, payment_method, fare_class_category, ridership, transfers)%>%
+  mutate(transit_timestamp = as.POSIXct(transit_timestamp, format="%Y-%m-%dT%H:%M:%S", tz="GMT"))%>%
+arrange(desc(transit_timestamp))%>%
+  mutate(
+    ridership = as.integer(ridership),
+    transfers = as.integer(transfers))
+```
+
+
+##Merged Data:
+**Merge the two data set on the station complex ID**
+```{r merge_1}
+merged_data <- inner_join(data_frame_clean, mta_stations_D, by = "station_complex_id", suffix = c("", "_D")) %>%
+  select(everything(), 'Stop Name', 'GTFS Latitude', 'GTFS Longitude')
+```
+**Remove unwanted columns**
+```{r merged_2}
+merged_data_clean <- select(merged_data, 
+                              -transit_timestamp,
+                              -Line,
+                              -Borough,
+                              -train_Line,
+                              -station_complex_id, 
+                              -`GTFS Stop ID`, 
+                              -`Station ID`, 
+                              -Georeference)
+```
+**Add ridership and transfer**
+```{r merged_3}
+merged_data_clean <- merged_data_clean %>%
+  mutate(total_ridership = ridership + transfers)%>%
+  select(-ridership, -transfers)%>%
+  rename(Stop_name = `Stop Name`)%>%
+  rename(GTFS_Latitude = `GTFS Latitude`)%>%
+  rename(GTFS_Longitude = `GTFS Longitude`)
+```
+
+##Statistical analysis and graphics.
+**Summary statistics on which fare type is the most popular one**
+```{r stat_1}
+payment_method_summary <- merged_data_clean %>%
+  group_by(fare_class_category) %>%
+  summarise(Total_Ridership = sum(total_ridership, na.rm = TRUE),
+            Average_Ridership = mean(total_ridership, na.rm = TRUE),
+            Count = n()) %>%
+  arrange(desc(Total_Ridership))
+print(payment_method_summary)
+
+```
+
+**Rideship by stop**
+```{r visual_1}
+plot_data <- merged_data_clean %>%
+  group_by(Stop_name, GTFS_Latitude, GTFS_Longitude) %>%
+  summarise(total_ridership = sum(total_ridership, na.rm = TRUE)) %>%
+  ungroup() %>%
+  arrange(desc(GTFS_Latitude))
+```
+
+```{r visual_2}
+ggplot(plot_data, aes(x = reorder(Stop_name, total_ridership), y = total_ridership)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Total Ridership by Subway Stop",
+       x = "Subway Stop",
+       y = "Total Ridership") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+##Using ggmap to plot out the result:
+
+**Set up the stadia map of NYC**
+```{r map_1}
+#API credentials had to first be set ip
+register_stadiamaps(key = "fdfed2b0-ab6e-4805-bff6-f450ea8b212e")
+bbox <- c(left = -74.05, bottom = 40.68, right = -73.85, top = 40.85)
+nyc_map <- get_stadiamap(bbox = bbox, zoom = 12, maptype = "stamen_terrain_lines")
+
+```
+**Plot the ridership data by station on the map**
+```{r map_2}
+ggmap(nyc_map) +
+  geom_point(data = plot_data, aes(x = GTFS_Longitude, y = GTFS_Latitude, size = total_ridership, color = total_ridership), alpha = 0.5) +
+  geom_line(data = plot_data, aes(x = GTFS_Longitude, y = GTFS_Latitude, group = 1), color = "orange", size = 1) +
+  scale_size_continuous(range = c(1, 10)) + 
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(title = "Thursday April 25nd 8am", x = "Longitude", y = "Latitude") +
+  theme_minimal()+
+  theme(legend.position = "none") 
+
+```
+
